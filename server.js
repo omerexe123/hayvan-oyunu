@@ -55,14 +55,11 @@ const LANES_CONFIG = [
   { id: 5, name: 'Kaplan', country: 'Suriye', gift: 'TikTok / Paten', giftKey: 'tiktok', color: '#ce1126', trackY: 82, giftIcon: 'assets/tiktok.webp' }
 ];
 
-// Oyun Durumu
+// Oyun Durumu (Sonsuz Canlı Yayın Yarışı - Tur Bitişi Yok)
 let gameState = {
-  round: 1,
-  targetScore: 300, // Bitiş çizgisi hedef puanı (300 hediye)
+  round: 'CANLI',
   lanes: LANES_CONFIG.map(l => ({ ...l, score: 0, progress: 0 })),
   leaderId: null,
-  winner: null,
-  isFinished: false,
   totalGiftsCount: 0,
   topGifters: []
 };
@@ -167,11 +164,9 @@ function resolveGiftKey(giftName) {
 }
 
 // -------------------------------------------------------------
-// Hediye İşleme ve Yarış İlerlemesi
+// Hediye İşleme ve Sonsuz Canlı Yarış İlerlemesi (Tur Bitişi Yok)
 // -------------------------------------------------------------
 function applyGift(giftKey, count = 1, user = {}) {
-  if (gameState.isFinished) return;
-
   const safeCount = Math.max(1, count || 1);
   const normalizedKey = (giftKey || '').toLowerCase();
 
@@ -182,7 +177,6 @@ function applyGift(giftKey, count = 1, user = {}) {
   ) || gameState.lanes[2]; // Varsayılan Gül -> Bozkurt Türkiye
 
   lane.score += safeCount;
-  lane.progress = Math.min(100, (lane.score / gameState.targetScore) * 100);
   gameState.totalGiftsCount += safeCount;
 
   // En çok hediye atanları kaydet
@@ -212,14 +206,10 @@ function applyGift(giftKey, count = 1, user = {}) {
     gameState.leaderId = newLeaderId;
   }
 
-  // Bitiş kontrolü
-  let winner = null;
-  if (lane.progress >= 100 && !gameState.isFinished) {
-    gameState.isFinished = true;
-    winner = lane;
-    gameState.winner = winner;
-    console.log(`[Hayvan Oyunu] Tur ${gameState.round} KAZANANI: ${winner.country} (${winner.name})!`);
-  }
+  // Oransal ilerleme (%0 - %100 arası, lider %100 referansı)
+  gameState.lanes.forEach(l => {
+    l.progress = maxScore > 0 ? (l.score / maxScore) * 100 : 0;
+  });
 
   broadcast({
     type: 'GIFT_EVENT',
@@ -232,27 +222,19 @@ function applyGift(giftKey, count = 1, user = {}) {
       avatar: user.avatar || 'https://api.dicebear.com/7.x/bottts/svg?seed=user'
     },
     gameState,
-    leaderChanged,
-    winner
+    leaderChanged
   });
-
-  if (winner) {
-    setTimeout(() => {
-      startNewRound();
-    }, 6000);
-  }
 }
 
-function startNewRound() {
-  gameState.round++;
-  gameState.isFinished = false;
-  gameState.winner = null;
+function resetGameScores() {
   gameState.leaderId = null;
+  gameState.totalGiftsCount = 0;
+  gameState.topGifters = [];
   gameState.lanes.forEach(l => {
     l.score = 0;
     l.progress = 0;
   });
-  console.log(`[Hayvan Oyunu] Tur ${gameState.round} Başladı!`);
+  console.log('[Hayvan Oyunu] Puanlar sıfırlandı, sonsuz canlı yarış devam ediyor.');
   broadcast({
     type: 'ROUND_RESET',
     gameState
@@ -279,7 +261,7 @@ wss.on('connection', ws => {
       if (msg.action === 'SEND_GIFT') {
         applyGift(msg.giftKey, msg.count || 1, msg.user || { nick: 'Yönetici' });
       } else if (msg.action === 'RESET_ROUND') {
-        startNewRound();
+        resetGameScores();
       } else if (msg.action === 'TOGGLE_DEMO') {
         toggleDemo(msg.enabled);
       }
@@ -468,7 +450,7 @@ app.post('/api/gift', (req, res) => {
 });
 
 app.post('/api/round/reset', (req, res) => {
-  startNewRound();
+  resetGameScores();
   res.json({ success: true, gameState });
 });
 

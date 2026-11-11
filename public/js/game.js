@@ -170,10 +170,9 @@ class AnimalRaceGame {
           </div>
         </div>
 
-        <!-- Koşu Yolu & Neon Çizgiler -->
+        <!-- Koşu Yolu & Neon Çizgiler (Sonsuz Koşu Pisti) -->
         <div class="track-ground">
           <div class="track-dash-glow"></div>
-          <div class="finish-line"></div>
         </div>
 
         <!-- Koşan Hayvan Karakteri (Otantik 4 Bacaklı Koşu Döngüsü) -->
@@ -247,15 +246,18 @@ class AnimalRaceGame {
         }
       }
     }
-
-    // 5. Bitiş & Kazanan Kontrolü
-    if (winner) {
-      this.onWinnerCelebration(winner);
-    }
   }
 
   updateAnimalPositions() {
     if (!this.gameState || !this.gameState.lanes) return;
+
+    // En çok hediye sayısı
+    const maxScore = Math.max(0, ...this.gameState.lanes.map(l => l.score || 0));
+
+    // Pist mesafesi: Sol hediye kutusundan (%24) sağ kenara (%82) kadar
+    const baseLeft = 24;
+    const maxLeft = 82;
+    const span = maxLeft - baseLeft;
 
     this.gameState.lanes.forEach(l => {
       const runner = this.animalElements[l.id];
@@ -263,11 +265,16 @@ class AnimalRaceGame {
       const crown = document.getElementById(`crown-${l.id}`);
 
       if (runner) {
-        // Sol hediye kutusundan sonra başla (%22), bitiş çizgisinde dur (%86)
-        const leftPercent = 22 + (l.progress / 100) * 64;
+        let leftPercent = baseLeft;
+        if (maxScore > 0 && l.score > 0) {
+          // En çok hediye alan en önde (%82), diğerleri puan oranına göre geride
+          const ratio = l.score / maxScore;
+          leftPercent = baseLeft + (ratio * span);
+        }
+
         runner.style.left = `${leftPercent}%`;
 
-        // Lider tacı
+        // Lider tacı sadece en çok hediyesi olan ve önde koşan hayvanda
         const isLeader = this.gameState.leaderId === l.id && l.score > 0;
         if (crown) {
           crown.style.display = isLeader ? 'block' : 'none';
@@ -396,7 +403,7 @@ class AnimalRaceGame {
     this.updateAnimalPositions();
     this.reorderLanesByRank();
     this.updateHUD();
-    this.showLeaderBanner(`🏁 YENİ TUR ${this.gameState.round} BAŞLADI! HEDİYENİ AT, TAKIMINI KAZANDIR!`);
+    this.showLeaderBanner(`🏁 PUANLAR SIFIRLANDI! SONSUZ CANLI YARIŞ DEVAM EDİYOR!`);
     if (window.soundEngine) {
       window.soundEngine.stopCurrentTheme();
     }
@@ -477,7 +484,7 @@ class AnimalRaceGame {
     const leaderEl = document.getElementById('hud-leader-name');
     const totalGiftsEl = document.getElementById('hud-total-gifts');
 
-    if (roundEl) roundEl.textContent = this.gameState.round;
+    if (roundEl) roundEl.textContent = 'CANLI';
     if (totalGiftsEl) totalGiftsEl.textContent = this.gameState.totalGiftsCount;
 
     if (leaderEl) {

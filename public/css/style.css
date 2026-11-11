@@ -417,24 +417,9 @@ body {
   to { background-position: -32px 0; }
 }
 
-/* Bitiş Çizgisi */
+/* Bitiş Çizgisi (Sonsuz Yarış Modunda Devre Dışı) */
 .finish-line {
-  position: absolute;
-  right: 28px;
-  top: 0;
-  bottom: 0;
-  width: 14px;
-  background: repeating-linear-gradient(
-    45deg,
-    #fff,
-    #fff 6px,
-    #000 6px,
-    #000 12px
-  );
-  box-shadow: 0 0 16px rgba(255, 255, 255, 0.7);
-  border-left: 2px solid var(--color-gold);
-  border-right: 2px solid var(--color-gold);
-  z-index: 5;
+  display: none !important;
 }
 
 /* Koşan Hayvan Öğesi */
