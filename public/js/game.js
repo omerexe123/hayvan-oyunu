@@ -708,29 +708,37 @@ class AnimalRaceGame {
 window.addEventListener('DOMContentLoaded', () => {
   window.game = new AnimalRaceGame();
 
+  let audioUnlocked = false;
   const unlockAudio = async () => {
+    if (audioUnlocked) return;
+    audioUnlocked = true;
+
+    // Dinleyicileri hemen kaldır (artık her tıklamada boş yere tetiklenmesin)
+    ['click', 'touchstart', 'keydown'].forEach(evt => {
+      window.removeEventListener(evt, unlockAudio);
+    });
+
+    const audioBanner = document.getElementById('audio-unlock-banner');
+    if (audioBanner) {
+      audioBanner.classList.add('hide');
+      setTimeout(() => { if (audioBanner.parentNode) audioBanner.remove(); }, 350);
+    }
+
     if (window.soundEngine) {
       await window.soundEngine.ensureContext();
       if (window.game && window.game.gameState && window.game.gameState.leaderId) {
-        if (!window.soundEngine.currentTheme || !window.soundEngine.tempoInterval) {
-          window.soundEngine.switchLeaderTheme(window.game.gameState.leaderId);
-        }
-      }
-      const audioBanner = document.getElementById('audio-unlock-banner');
-      if (audioBanner) {
-        audioBanner.classList.add('hide');
-        setTimeout(() => { if (audioBanner.parentNode) audioBanner.remove(); }, 350);
+        window.soundEngine.switchLeaderTheme(window.game.gameState.leaderId);
       }
     }
   };
 
-  // Kullanıcı herhangi bir yere tıkladığında/dokunduğunda veya tuşa bastığında ses kilidini aç
+  // Kullanıcı herhangi bir yere ilk tıkladığında/dokunduğunda ses kilidini aç
   ['click', 'touchstart', 'keydown'].forEach(evt => {
-    window.addEventListener(evt, unlockAudio, { passive: true });
+    window.addEventListener(evt, unlockAudio, { passive: true, once: true });
   });
 
   const banner = document.getElementById('audio-unlock-banner');
   if (banner) {
-    banner.addEventListener('click', unlockAudio);
+    banner.addEventListener('click', unlockAudio, { once: true });
   }
 });

@@ -1,123 +1,98 @@
 /**
- * Hayvan Oyunu - Orijinal Ülke Müzikleri & Ses Motoru
- * Her ülke için orijinal MP3 müzik kataloğu + Hayvan SFX
+ * Hayvan Oyunu - Orijinal Ülke Müzikleri & Ses Motoru (Kernel Seviye Stabil)
+ * 5 Ülke x 2 Orijinal MP3 Marş/Müzik Kataloğu + Hayvan SFX
  * "ÖNDE OLANIN ŞARKISI ÇALAR"
  */
 
 class SoundEngine {
   constructor() {
     this.ctx = null;
+    this.sfxGain = null;
     this.isMuted = false;
     this.currentTheme = null;
+    this.currentTrack = null;
     this.currentTrackName = '';
-    this.musicGain = null;
-    this.sfxGain = null;
-    this.tempoInterval = null; // game.js uyumluluğu için bayrak
-    this.activeOscillators = [];
+    this.tempoInterval = true; // game.js uyumluluğu için bayrak
+    this.audio = null; // Tek ve merkezi müzik oynatıcı
     this.initialized = false;
-    this.currentAudio = null;
-    this.audioCache = {};
 
-    // Her ülke için parça takip indeksi
+    // Her ülke için parça takip indeksi (0 veya 1)
     this.trackIndices = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
 
-    // 5 Ülke Orijinal Şarkı Kataloğu (Gerçek MP3 Müzikler)
+    // 5 Ülke Orijinal Şarkı Kataloğu
     this.CATALOG = {
       // 1. KÜRDİSTAN (Aslan)
       1: [
-        { name: 'Şemmamé (İbrahim Tatlıses)', file: 'music/semmame.mp3', fn: 'playSemmame' },
-        { name: 'Herne Pêş (Şivan Perwer)', file: 'music/herne_pes.mp3', fn: 'playHernePes' }
+        { name: 'Şemmamé', file: 'music/semmame.mp3' },
+        { name: 'Herne Pêş', file: 'music/herne_pes.mp3' }
       ],
       // 2. AZERBAYCAN (Kurt)
       2: [
-        { name: 'Çırpınırdı Karadeniz (Azerin)', file: 'music/cirpinirdi.mp3', fn: 'playCirpinirdi' },
-        { name: 'Lezginka & Qaytağı (Kafkas Dansı)', file: 'music/lezginka.mp3', fn: 'playLezginka' }
+        { name: 'Çırpınırdı Karadeniz', file: 'music/cirpinirdi.mp3' },
+        { name: 'Lezginka & Qaytağı', file: 'music/lezginka.mp3' }
       ],
       // 3. TÜRKİYE (Bozkurt)
       3: [
-        { name: 'Ölürüm Türkiyem (Mustafa Yıldızdoğan)', file: 'music/olurum_turkiyem.mp3', fn: 'playOlurumTurkiyem' },
-        { name: 'Ceddin Deden (Mehter Marşı)', file: 'music/mehter.mp3', fn: 'playMehterTheme' }
+        { name: 'Ölürüm Türkiyem', file: 'music/olurum_turkiyem.mp3' },
+        { name: 'Ceddin Deden Mehter', file: 'music/mehter.mp3' }
       ],
       // 4. AFGANİSTAN (Pars)
       4: [
-        { name: 'Attan Savaş & Zafer Dansı', file: 'music/attan.mp3', fn: 'playAttanDance' },
-        { name: 'Qataghani Mast (Afgan Rubab & Dambura)', file: 'music/qataghani.mp3', fn: 'playQataghani' }
+        { name: 'Attan Milli Dansı', file: 'music/attan.mp3' },
+        { name: 'Qataghani Mast', file: 'music/qataghani.mp3' }
       ],
       // 5. SURİYE (Kaplan)
       5: [
-        { name: 'Dabke Suri (Suriye Halayı)', file: 'music/dabke.mp3', fn: 'playDabkeSuri' },
-        { name: 'Homat el Diyar (Suriye Milli Marşı)', file: 'music/homat_el_diyar.mp3', fn: 'playHomatElDiyar' }
+        { name: 'Suriye Dabke', file: 'music/dabke.mp3' },
+        { name: 'Homat el Diyar', file: 'music/homat_el_diyar.mp3' }
       ]
     };
-
-    this.preloadCatalog();
   }
 
-  preloadCatalog() {
-    try {
-      for (const laneId in this.CATALOG) {
-        this.CATALOG[laneId].forEach(track => {
-          const audio = new Audio();
-          audio.preload = 'auto';
-          audio.src = track.file;
-          this.audioCache[track.file] = audio;
-        });
-      }
-    } catch (e) {
-      console.warn('[SoundEngine] Müzik önbelleğe alma uyarısı:', e);
-    }
-  }
-
+  // Sadece AudioContext ve gain düğümlerini kurar (Asla müzik çalma fonksiyonlarını çağırmaz!)
   init() {
     if (this.initialized) return;
     try {
       const AudioCtx = window.AudioContext || window.webkitAudioContext;
       if (AudioCtx) {
         this.ctx = new AudioCtx();
-        this.musicGain = this.ctx.createGain();
-        this.musicGain.gain.setValueAtTime(0.75, this.ctx.currentTime);
-        this.musicGain.connect(this.ctx.destination);
-
         this.sfxGain = this.ctx.createGain();
-        this.sfxGain.gain.setValueAtTime(0.65, this.ctx.currentTime);
+        this.sfxGain.gain.setValueAtTime(0.5, this.ctx.currentTime);
         this.sfxGain.connect(this.ctx.destination);
       }
       this.initialized = true;
-      console.log('[SoundEngine] Orijinal ülke müzikleri ve ses motoru hazır.');
     } catch (e) {
-      console.warn('[SoundEngine] Ses motoru başlatılamadı:', e.message);
+      console.warn('[SoundEngine] Web Audio init uyarısı:', e.message);
     }
   }
 
+  // Kullanıcı dokunuşunda context'i uyandırır (Döngü veya re-entrancy İÇERMEZ!)
   async ensureContext() {
     if (!this.initialized) this.init();
     if (this.ctx && this.ctx.state === 'suspended') {
       try {
         await this.ctx.resume();
-        console.log('[SoundEngine] AudioContext aktif.');
-      } catch (e) {
-        console.warn('[SoundEngine] AudioContext resume bekleniyor:', e.message);
-      }
+      } catch (e) {}
     }
-    if (this.currentTheme && (!this.currentAudio || this.currentAudio.paused) && !this.isMuted) {
-      this.playThemeForLane(this.currentTheme);
+    // Eğer müzik durmuşsa ve ses kapalı değilse oynatmayı dene
+    if (this.audio && this.audio.paused && !this.isMuted && this.currentTrack) {
+      this.audio.play().catch(() => {});
     }
     return this.ctx ? this.ctx.state : null;
   }
 
+  // Mute / Unmute
   toggleMute() {
     this.isMuted = !this.isMuted;
-    if (this.currentAudio) {
-      this.currentAudio.volume = this.isMuted ? 0 : 0.85;
-    }
-    if (this.musicGain) {
-      this.musicGain.gain.value = this.isMuted ? 0 : 0.75;
+    if (this.audio) {
+      this.audio.muted = this.isMuted;
+      this.audio.volume = this.isMuted ? 0 : 0.85;
+      if (!this.isMuted && this.audio.paused && this.currentTrack) {
+        this.audio.play().catch(() => {});
+      }
     }
     if (this.sfxGain) {
-      this.sfxGain.gain.value = this.isMuted ? 0 : 0.65;
-    }
-    if (!this.isMuted && this.currentTheme && (!this.currentAudio || this.currentAudio.paused)) {
-      this.playThemeForLane(this.currentTheme);
+      this.sfxGain.gain.value = this.isMuted ? 0 : 0.5;
     }
     return this.isMuted;
   }
@@ -126,250 +101,194 @@ class SoundEngine {
   // "ÖNDE OLANIN ŞARKISI ÇALAR" (Dinamik Liderlik Geçiş Motoru)
   // -------------------------------------------------------------
   switchLeaderTheme(laneId) {
-    this.ensureContext();
-    if (this.isMuted) return { name: '' };
+    if (!laneId) return { name: '' };
+    laneId = Number(laneId);
 
     const tracks = this.CATALOG[laneId];
     if (!tracks || tracks.length === 0) return { name: '' };
 
-    // Eğer lider aynıysa ve şarkı kesilmeden çalıyorsa parçayı bölme
-    if (this.currentTheme === laneId && this.currentAudio && !this.currentAudio.paused) {
-      const currentTrackIdx = Math.max(0, (this.trackIndices[laneId] - 1 + tracks.length) % tracks.length);
-      return tracks[currentTrackIdx] || tracks[0];
+    // Eğer zaten bu lider çalıyorsa ve durmadıysa parçayı bölme, kesintisiz devam etsin
+    if (this.currentTheme === laneId && this.audio && !this.audio.paused) {
+      return this.currentTrack || tracks[0];
     }
 
+    // Sıradaki parçayı seç
     const trackIdx = this.trackIndices[laneId] % tracks.length;
     const track = tracks[trackIdx];
     this.trackIndices[laneId] = (trackIdx + 1) % tracks.length;
 
     this.currentTheme = laneId;
+    this.currentTrack = track;
     this.currentTrackName = track.name;
 
-    this.playThemeForLane(laneId, track);
+    // Şarkıyı ve hayvan efektini başlat
+    this.playTrack(track, laneId);
+    this.playLaneSfx(laneId);
+
     return track;
   }
 
-  playThemeForLane(laneId, track = null) {
-    if (this.isMuted) return;
-    if (!track) {
-      const tracks = this.CATALOG[laneId] || [];
-      const trackIdx = Math.max(0, (this.trackIndices[laneId] - 1 + tracks.length) % tracks.length);
-      track = tracks[trackIdx] || tracks[0];
-    }
-    if (!track) return;
-
-    this.currentTrackName = track.name;
-
-    // Hayvan Kükremesi / Uluması SFX
-    switch (laneId) {
-      case 3: this.playWolfHowl(); break;
-      case 2: this.playWolfHowl(true); break;
-      case 1: this.playLionRoar(); break;
-      case 4: this.playParsRoar(); break;
-      case 5: this.playTigerRoar(); break;
-    }
-
-    // Orijinal MP3 şarkıyı çal
-    this.playOriginalTrack(track, laneId);
-  }
-
-  playOriginalTrack(track, laneId) {
-    if (this.currentAudio) {
+  playTrack(track, laneId) {
+    // Eski şarkıyı temizce durdur
+    if (this.audio) {
       try {
-        this.currentAudio.pause();
-        this.currentAudio.currentTime = 0;
+        this.audio.pause();
+        this.audio.onended = null;
+        this.audio.src = '';
       } catch (e) {}
     }
 
-    let audio = this.audioCache[track.file];
-    if (!audio) {
-      audio = new Audio(track.file);
-      this.audioCache[track.file] = audio;
-    }
+    try {
+      const audio = new Audio(track.file);
+      audio.preload = 'auto';
+      audio.volume = this.isMuted ? 0 : 0.85;
+      audio.muted = this.isMuted;
 
-    audio.volume = this.isMuted ? 0 : 0.85;
-    audio.currentTime = 0;
+      // Şarkı bitince lider değişmediyse sıradaki parçaya geçsin
+      audio.onended = () => {
+        if (this.currentTheme === laneId && !this.isMuted) {
+          this.switchLeaderTheme(laneId);
+        }
+      };
 
-    const playPromise = audio.play();
-    if (playPromise !== undefined) {
-      playPromise
-        .then(() => {
-          console.log(`[SoundEngine] 🎵 Çalıyor: ${track.name} (${track.file})`);
-        })
-        .catch(err => {
-          console.warn('[SoundEngine] Otomatik oynatma engeli (kullanıcı dokunuşu bekleniyor):', err.message);
-        });
-    }
+      this.audio = audio;
 
-    this.currentAudio = audio;
-    this.tempoInterval = true; // game.js kontrolü için
-
-    audio.onended = () => {
-      // Şarkı bitince sıradaki parçaya otomatik geçiş yap
-      if (this.currentTheme === laneId && !this.isMuted) {
-        const tracks = this.CATALOG[laneId];
-        const nextIdx = this.trackIndices[laneId] % tracks.length;
-        const nextTrack = tracks[nextIdx];
-        this.trackIndices[laneId] = (nextIdx + 1) % tracks.length;
-        this.currentTrackName = nextTrack.name;
-        this.playOriginalTrack(nextTrack, laneId);
+      if (!this.isMuted) {
+        const p = audio.play();
+        if (p !== undefined) {
+          p.catch(() => {
+            // Autoplay henüz açılmadıysa sessizce unlock tıkını bekle
+          });
+        }
       }
-    };
+    } catch (err) {
+      console.warn('[SoundEngine] Müzik çalma hatası:', err.message);
+    }
   }
 
   stopCurrentTheme() {
-    if (this.currentAudio) {
+    if (this.audio) {
       try {
-        this.currentAudio.pause();
-        this.currentAudio.currentTime = 0;
+        this.audio.pause();
+        this.audio.onended = null;
+        this.audio.src = '';
       } catch (e) {}
-      this.currentAudio = null;
+      this.audio = null;
     }
-    this.tempoInterval = null;
-    this.activeOscillators.forEach(osc => {
-      try { osc.stop(); osc.disconnect(); } catch (e) {}
-    });
-    this.activeOscillators = [];
+    this.currentTheme = null;
+    this.currentTrack = null;
+    this.currentTrackName = '';
   }
 
   // ===========================================================================
-  // SFX (SES EFEKTLERİ: KÜKREME, ULUMA, HEDİYE PİNG, ZAFER FANFARI)
+  // SFX (HAFİF, KASMAYAN, TEK SEFERLİK SES EFEKTLERİ)
+  // Kesinlikle ensureContext çağırmaz, recursive döngüye girmez!
   // ===========================================================================
-  playGiftPing() {
-    this.ensureContext();
-    if (!this.ctx || this.isMuted) return;
+  playLaneSfx(laneId) {
+    if (!this.ctx || this.ctx.state !== 'running' || this.isMuted) return;
     try {
+      const t = this.ctx.currentTime;
       const osc = this.ctx.createOscillator();
       const gain = this.ctx.createGain();
-      osc.type = 'triangle';
-      const t = this.ctx.currentTime;
-      osc.frequency.setValueAtTime(880, t);
-      osc.frequency.exponentialRampToValueAtTime(1760, t + 0.12);
-      gain.gain.setValueAtTime(0.3, t);
-      gain.gain.exponentialRampToValueAtTime(0.001, t + 0.15);
-      osc.connect(gain);
-      gain.connect(this.sfxGain);
-      osc.start(t);
-      osc.stop(t + 0.16);
+
+      switch (laneId) {
+        case 3: // Türkiye Bozkurt
+        case 2: // Azerbaycan Kurt
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(340, t);
+          osc.frequency.exponentialRampToValueAtTime(700, t + 0.35);
+          osc.frequency.exponentialRampToValueAtTime(300, t + 0.8);
+          gain.gain.setValueAtTime(0.01, t);
+          gain.gain.linearRampToValueAtTime(0.2, t + 0.2);
+          gain.gain.exponentialRampToValueAtTime(0.001, t + 0.8);
+          osc.connect(gain);
+          gain.connect(this.sfxGain);
+          osc.start(t);
+          osc.stop(t + 0.85);
+          break;
+
+        case 1: // Kürdistan Aslan
+        case 5: // Suriye Kaplan
+          osc.type = 'sawtooth';
+          osc.frequency.setValueAtTime(95, t);
+          osc.frequency.exponentialRampToValueAtTime(45, t + 0.6);
+          gain.gain.setValueAtTime(0.18, t);
+          gain.gain.exponentialRampToValueAtTime(0.001, t + 0.65);
+          osc.connect(gain);
+          gain.connect(this.sfxGain);
+          osc.start(t);
+          osc.stop(t + 0.7);
+          break;
+
+        case 4: // Afganistan Pars
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(200, t);
+          osc.frequency.exponentialRampToValueAtTime(110, t + 0.45);
+          gain.gain.setValueAtTime(0.18, t);
+          gain.gain.exponentialRampToValueAtTime(0.001, t + 0.5);
+          osc.connect(gain);
+          gain.connect(this.sfxGain);
+          osc.start(t);
+          osc.stop(t + 0.55);
+          break;
+      }
     } catch (e) {}
   }
 
-  playWolfHowl(isShort = false) {
-    this.ensureContext();
-    if (!this.ctx || this.isMuted) return;
+  playGiftPing() {
+    if (!this.ctx || this.ctx.state !== 'running' || this.isMuted) return;
     try {
+      const t = this.ctx.currentTime;
       const osc = this.ctx.createOscillator();
       const gain = this.ctx.createGain();
       osc.type = 'sine';
-      const t = this.ctx.currentTime;
-      const dur = isShort ? 0.9 : 1.4;
-      osc.frequency.setValueAtTime(320, t);
-      osc.frequency.exponentialRampToValueAtTime(680, t + dur * 0.4);
-      osc.frequency.exponentialRampToValueAtTime(260, t + dur);
-      gain.gain.setValueAtTime(0.01, t);
-      gain.gain.linearRampToValueAtTime(0.35, t + dur * 0.25);
-      gain.gain.exponentialRampToValueAtTime(0.001, t + dur);
+      osc.frequency.setValueAtTime(987.77, t); // B5
+      osc.frequency.exponentialRampToValueAtTime(1975.53, t + 0.08); // B6
+      gain.gain.setValueAtTime(0.15, t);
+      gain.gain.exponentialRampToValueAtTime(0.001, t + 0.12);
       osc.connect(gain);
       gain.connect(this.sfxGain);
       osc.start(t);
-      osc.stop(t + dur + 0.05);
-    } catch (e) {}
-  }
-
-  playLionRoar() {
-    this.ensureContext();
-    if (!this.ctx || this.isMuted) return;
-    try {
-      const osc = this.ctx.createOscillator();
-      const gain = this.ctx.createGain();
-      osc.type = 'sawtooth';
-      const t = this.ctx.currentTime;
-      osc.frequency.setValueAtTime(90, t);
-      osc.frequency.exponentialRampToValueAtTime(45, t + 0.9);
-      gain.gain.setValueAtTime(0.3, t);
-      gain.gain.exponentialRampToValueAtTime(0.001, t + 0.95);
-      osc.connect(gain);
-      gain.connect(this.sfxGain);
-      osc.start(t);
-      osc.stop(t + 1.0);
-    } catch (e) {}
-  }
-
-  playTigerRoar() {
-    this.ensureContext();
-    if (!this.ctx || this.isMuted) return;
-    try {
-      const osc = this.ctx.createOscillator();
-      const gain = this.ctx.createGain();
-      osc.type = 'sawtooth';
-      const t = this.ctx.currentTime;
-      osc.frequency.setValueAtTime(110, t);
-      osc.frequency.exponentialRampToValueAtTime(60, t + 0.8);
-      gain.gain.setValueAtTime(0.26, t);
-      gain.gain.exponentialRampToValueAtTime(0.001, t + 0.85);
-      osc.connect(gain);
-      gain.connect(this.sfxGain);
-      osc.start(t);
-      osc.stop(t + 0.9);
-    } catch (e) {}
-  }
-
-  playParsRoar() {
-    this.ensureContext();
-    if (!this.ctx || this.isMuted) return;
-    try {
-      const osc = this.ctx.createOscillator();
-      const gain = this.ctx.createGain();
-      osc.type = 'triangle';
-      const t = this.ctx.currentTime;
-      osc.frequency.setValueAtTime(220, t);
-      osc.frequency.exponentialRampToValueAtTime(120, t + 0.5);
-      gain.gain.setValueAtTime(0.25, t);
-      gain.gain.exponentialRampToValueAtTime(0.001, t + 0.55);
-      osc.connect(gain);
-      gain.connect(this.sfxGain);
-      osc.start(t);
-      osc.stop(t + 0.6);
+      osc.stop(t + 0.13);
     } catch (e) {}
   }
 
   playVictoryFanfare() {
-    this.ensureContext();
-    if (!this.ctx || this.isMuted) return;
-    this.stopCurrentTheme();
+    if (!this.ctx || this.ctx.state !== 'running' || this.isMuted) return;
     try {
-      const fanfareNotes = [
-        { f: 523.25, d: 0.2 }, { f: 523.25, d: 0.2 }, { f: 523.25, d: 0.2 },
-        { f: 659.25, d: 0.6 }, { f: 587.33, d: 0.3 }, { f: 783.99, d: 1.2 }
-      ];
-      let time = this.ctx.currentTime;
-      fanfareNotes.forEach(n => {
+      const t = this.ctx.currentTime;
+      const notes = [523.25, 659.25, 783.99, 1046.50];
+      notes.forEach((freq, i) => {
         const osc = this.ctx.createOscillator();
         const gain = this.ctx.createGain();
-        osc.type = 'sawtooth';
-        osc.frequency.setValueAtTime(n.f, time);
-        gain.gain.setValueAtTime(0.3, time);
-        gain.gain.exponentialRampToValueAtTime(0.001, time + n.d);
+        osc.type = 'triangle';
+        const start = t + i * 0.12;
+        osc.frequency.setValueAtTime(freq, start);
+        gain.gain.setValueAtTime(0.2, start);
+        gain.gain.exponentialRampToValueAtTime(0.001, start + 0.25);
         osc.connect(gain);
         gain.connect(this.sfxGain);
-        osc.start(time);
-        osc.stop(time + n.d + 0.05);
-        time += n.d;
+        osc.start(start);
+        osc.stop(start + 0.26);
       });
     } catch (e) {}
   }
 
-  // Geriye dönük uyumluluk için katalog fonksiyon çağrıları
-  playSemmame() { this.playThemeForLane(1); }
-  playHernePes() { this.playThemeForLane(1); }
-  playCirpinirdi() { this.playThemeForLane(2); }
-  playLezginka() { this.playThemeForLane(2); }
-  playOlurumTurkiyem() { this.playThemeForLane(3); }
-  playMehterTheme() { this.playThemeForLane(3); }
-  playAttanDance() { this.playThemeForLane(4); }
-  playQataghani() { this.playThemeForLane(4); }
-  playDabkeSuri() { this.playThemeForLane(5); }
-  playHomatElDiyar() { this.playThemeForLane(5); }
+  // Geriye dönük uyumluluk takma adları
+  playWolfHowl() { this.playLaneSfx(3); }
+  playLionRoar() { this.playLaneSfx(1); }
+  playTigerRoar() { this.playLaneSfx(5); }
+  playParsRoar() { this.playLaneSfx(4); }
+  playSemmame() { this.switchLeaderTheme(1); }
+  playHernePes() { this.switchLeaderTheme(1); }
+  playCirpinirdi() { this.switchLeaderTheme(2); }
+  playLezginka() { this.switchLeaderTheme(2); }
+  playOlurumTurkiyem() { this.switchLeaderTheme(3); }
+  playMehterTheme() { this.switchLeaderTheme(3); }
+  playAttanDance() { this.switchLeaderTheme(4); }
+  playQataghani() { this.switchLeaderTheme(4); }
+  playDabkeSuri() { this.switchLeaderTheme(5); }
+  playHomatElDiyar() { this.switchLeaderTheme(5); }
 }
 
 window.soundEngine = new SoundEngine();
