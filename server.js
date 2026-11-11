@@ -376,10 +376,7 @@ function connectToTikTok(rawUsername) {
     });
 
     liveClient.on('like', data => {
-      const count = Number(data.likeCount || data.count || 1) || 1;
-      const user = extractTikTokUser(data);
-      // Canlı yayın beğenileri Türkiye Bozkurt'una puan kazandırsın
-      applyGift('rose', count, user);
+      // Beğeni etkileşimi tamamen kaldırıldı: Beğeniler yarışa etki etmez, sadece hediye atanlar ilerler.
     });
 
     liveClient.on('chat', data => {
