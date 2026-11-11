@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
+  <defs>
+    <linearGradient id="boot-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#c084fc" />
+      <stop offset="60%" stop-color="#8b5cf6" />
+      <stop offset="100%" stop-color="#5b21b6" />
+    </linearGradient>
+    <radialGradient id="wheel-glow" cx="40%" cy="40%" r="60%">
+      <stop offset="0%" stop-color="#fbbf24" />
+      <stop offset="100%" stop-color="#d97706" />
+    </radialGradient>
+  </defs>
+  <!-- Paten Botu -->
+  <path d="M22 22 L45 22 L48 50 L75 58 L78 72 L18 72 L18 26 Z" fill="url(#boot-grad)" stroke="#ede9fe" stroke-width="2.5" stroke-linejoin="round"/>
+  <!-- Bağcıklar -->
+  <line x1="30" y1="32" x2="42" y2="34" stroke="#fff" stroke-width="2"/>
+  <line x1="32" y1="42" x2="44" y2="44" stroke="#fff" stroke-width="2"/>
+  <!-- Taban -->
+  <rect x="14" y="72" width="70" height="6" rx="2" fill="#334155"/>
+  <!-- Tekerlekler -->
+  <circle cx="28" cy="85" r="9" fill="url(#wheel-glow)" stroke="#fff" stroke-width="2"/>
+  <circle cx="28" cy="85" r="3" fill="#78350f"/>
+  <circle cx="70" cy="85" r="9" fill="url(#wheel-glow)" stroke="#fff" stroke-width="2"/>
+  <circle cx="70" cy="85" r="3" fill="#78350f"/>
+</svg>

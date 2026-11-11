@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Tam Oto Hatasız Hayvan Oyunu - TikTok Canlı Yayın</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Teko:wght@600;700&family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <!-- Ana Oyun Sahnesi (9:16 Dikey TikTok & OBS Uyumlu) -->
+  <main class="stream-wrapper">
+    <section class="game-stage" id="stage-container">
+      
+      <!-- Arka Plan Görseli & Parçacık Katmanı -->
+      <div class="stage-bg"></div>
+      <div class="stage-overlay"></div>
+      <canvas id="confetti-canvas" class="confetti-canvas"></canvas>
+
+      <!-- Ses Kilidi Bildirim Banner'ı (Browser Autoplay Unlock) -->
+      <div id="audio-unlock-banner" class="audio-unlock-banner">
+        <span class="audio-banner-pulse"></span>
+        <span class="audio-banner-icon">🔊</span>
+        <span class="audio-banner-text">Müzikleri Başlatmak İçin Dokunun</span>
+        <button class="audio-banner-btn">SESİ AÇ</button>
+      </div>
+
+      <!-- Üst HUD Barı (Canlı Yayın Bilgileri) -->
+      <header class="stage-header">
+        <div class="hud-box hud-round">
+          <span class="hud-label">TUR</span>
+          <span class="hud-val" id="hud-round-num">1</span>
+        </div>
+
+        <div class="hud-box hud-leader">
+          <div class="leader-crown-icon">👑</div>
+          <div class="leader-text-wrap">
+            <span class="hud-label">ŞU AN ÖNDE OLAN</span>
+            <span class="hud-val leader-highlight" id="hud-leader-name">YARIŞ BAŞLIYOR</span>
+          </div>
+          <div class="music-wave-badge" title="Önde olanın marşı çalıyor">
+            <span class="bar bar-1"></span>
+            <span class="bar bar-2"></span>
+            <span class="bar bar-3"></span>
+          </div>
+        </div>
+
+        <div class="hud-box hud-gifts">
+          <span class="hud-label">TOPLAM HEDİYE</span>
+          <span class="hud-val" id="hud-total-gifts">0</span>
+        </div>
+      </header>
+
+      <!-- Dinamik Lider & Olay Bildirim Banner'ı -->
+      <div class="top-alert-banner" id="top-alert-banner">
+        🔥 HEDİYENİ AT, TAKIMINI ÖNE GEÇİR!
+      </div>
+
+      <!-- 5 Kulvar Koşu Alanı -->
+      <section class="lanes-container" id="lanes-container">
+        <!-- JS tarafından otomatik inşa edilir -->
+      </section>
+
+      <!-- Alt Bilgi / Çağrı Şeridi -->
+      <footer class="stage-footer">
+        <div class="footer-callout">
+          <span class="callout-badge">CANLI YAYIN</span>
+          <span class="callout-msg">🦁 1x GG &bull; 💙 1x Kalp &bull; 🌹 1x Gül &bull; 🍦 1x Dondurma &bull; 🎵 1x TikTok</span>
+        </div>
+      </footer>
+
+      <!-- Kazanan Kutlama Modalı (Tam Ekran Şampiyonluk) -->
+      <div class="winner-modal" id="winner-modal">
+        <div class="winner-card">
+          <div class="winner-trophy">🏆</div>
+          <div class="winner-stars">✨ 🌟 ✨</div>
+          <h2 class="winner-title" id="winner-team-name">TÜRKİYE (BOZKURT) KAZANDI!</h2>
+          <p class="winner-desc" id="winner-sub-text">Toplam 300 hediye ile şampiyon oldu!</p>
+          <div class="countdown-badge" id="round-countdown">Yeni Tur: 5</div>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- Yayıncı Kontrol Paneli (OBS modunda gizlenir) -->
+    <aside class="control-panel" id="control-panel">
+      <div class="panel-header">
+        <div class="panel-title-wrap">
+          <h1 class="panel-title">TikTok Hayvan Oyunu Kontrol</h1>
+          <span class="panel-version">v1.0.0 &bull; Tam Oto</span>
+        </div>
+        <div class="status-group">
+          <span class="status-pill disconnected" id="ws-status-pill">Sunucu Aranıyor</span>
+          <span class="status-pill disconnected" id="tiktok-status-pill">TikTok Kapalı</span>
+        </div>
+      </div>
+
+      <!-- TikTok Bağlantı Kartı -->
+      <div class="panel-card">
+        <label class="control-label" for="tiktok-username-input">TikTok Canlı Yayın Kullanıcı Adı</label>
+        <div class="input-action-row">
+          <input type="text" id="tiktok-username-input" class="text-input" placeholder="Örn: kullanici_adi" autocomplete="off" />
+          <button id="tiktok-connect-btn" class="btn btn-primary">Bağlan</button>
+        </div>
+      </div>
+
+      <!-- Otomasyon ve Test Butonları -->
+      <div class="panel-card">
+        <span class="control-label">Yayın & Simülasyon Kontrolleri</span>
+        <div class="button-grid">
+          <button id="demo-btn" class="btn btn-secondary">▶ Otomatik Demo (Başlat)</button>
+          <button id="reset-btn" class="btn btn-outline">🔄 Turu Sıfırla</button>
+          <button id="mute-btn" class="btn btn-outline">🔊 Ses Açık</button>
+          <a href="?obs=1" target="_blank" class="btn btn-obs" title="OBS Studio Tarayıcı Kaynağı Modu">🎥 OBS Modunu Aç</a>
+        </div>
+      </div>
+
+      <!-- Hızlı Manuel Hediye Test Tuşları -->
+      <div class="panel-card">
+        <span class="control-label">Manuel Hediye Testi (Tıkla ve İlerle)</span>
+        <div class="quick-gift-grid">
+          <button class="gift-quick-btn gift-gg" onclick="window.game.sendManualGift('gg', 5)">
+            <img src="assets/gg.webp" alt="GG" />
+            <span>GG (+5)</span>
+          </button>
+          <button class="gift-quick-btn gift-heart" onclick="window.game.sendManualGift('heart', 5)">
+            <img src="assets/heart.webp" alt="Kalp" />
+            <span>Kalp (+5)</span>
+          </button>
+          <button class="gift-quick-btn gift-rose" onclick="window.game.sendManualGift('rose', 5)">
+            <img src="assets/rose.webp" alt="Gül" />
+            <span>Gül (+5)</span>
+          </button>
+          <button class="gift-quick-btn gift-icecream" onclick="window.game.sendManualGift('icecream', 5)">
+            <img src="assets/ice_cream.webp" alt="Dondurma" />
+            <span>Dondurma (+5)</span>
+          </button>
+          <button class="gift-quick-btn gift-skate" onclick="window.game.sendManualGift('tiktok', 5)">
+            <img src="assets/tiktok.webp" alt="TikTok" />
+            <span>TikTok (+5)</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Bilgilendirme Notu -->
+      <div class="panel-footer-note">
+        💡 <b>Müzik Kuralı:</b> Hangi takım öne geçerse anında o ülkenin/hayvanın özel marşı çalmaya başlar!
+      </div>
+    </aside>
+  </main>
+
+  <!-- Ses ve Oyun Mantığı -->
+  <script src="js/audio.js"></script>
+  <script src="js/game.js"></script>
+</body>
+</html>

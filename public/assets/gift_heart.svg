@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
+  <defs>
+    <radialGradient id="heart-glow" cx="35%" cy="30%" r="70%">
+      <stop offset="0%" stop-color="#38bdf8" />
+      <stop offset="45%" stop-color="#0284c7" />
+      <stop offset="100%" stop-color="#0369a1" />
+    </radialGradient>
+    <filter id="heart-shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="4" stdDeviation="4" flood-color="#0284c7" flood-opacity="0.6"/>
+    </filter>
+  </defs>
+  <path d="M50 86 C 20 60, 5 44, 5 28 A 22 22 0 0 1 50 20 A 22 22 0 0 1 95 28 C 95 44, 80 60, 50 86 Z" fill="url(#heart-glow)" filter="url(#heart-shadow)" stroke="#e0f2fe" stroke-width="2.5"/>
+  <ellipse cx="32" cy="28" rx="8" ry="4" fill="#fff" opacity="0.65" transform="rotate(-30 32 28)"/>
+</svg>

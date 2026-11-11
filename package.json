@@ -1,0 +1,14 @@
+{
+  "name": "hayvan-oyunu",
+  "version": "1.0.0",
+  "description": "TikTok Canlı Yayın Hediyeli Hayvan Yarışı Oyunu (Tam Otomatik)",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^5.3.0",
+    "tiktok-live-connector": "^2.5.0",
+    "ws": "^8.22.2"
+  }
+}
