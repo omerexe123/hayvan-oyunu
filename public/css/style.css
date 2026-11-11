@@ -272,9 +272,9 @@ body {
   position: absolute;
   left: 0;
   right: 0;
-  height: clamp(88px, 12vh, 150px);
-  top: calc(14px + var(--lane-rank, 0) * (clamp(88px, 12vh, 150px) + clamp(8px, 1.8vh, 22px)));
-  transition: top 0.65s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.3s ease;
+  height: clamp(86px, 11.5vh, 138px);
+  top: calc(clamp(32px, 4.5vh, 48px) + var(--lane-rank, 0) * (clamp(86px, 11.5vh, 138px) + clamp(8px, 1.6vh, 20px)));
+  transition: top 0.65s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.3s ease;
   display: flex;
   align-items: center;
 }
@@ -437,8 +437,8 @@ body {
 
 .runner-crown {
   position: absolute;
-  top: -26px;
-  font-size: 1.5rem;
+  top: -22px;
+  font-size: 1.35rem;
   display: none;
   filter: drop-shadow(0 0 8px rgba(251, 191, 36, 0.8));
   animation: crownBounce 0.8s infinite alternate ease-in-out;
@@ -446,7 +446,7 @@ body {
 
 @keyframes crownBounce {
   0% { transform: translateY(0); }
-  100% { transform: translateY(-6px); }
+  100% { transform: translateY(-4px); }
 }
 
 /* ==========================================================================
@@ -455,8 +455,8 @@ body {
 
 .animal-sprite-wrap {
   position: relative;
-  width: clamp(145px, 18vw, 225px);
-  height: clamp(82px, 11vw, 130px);
+  width: clamp(130px, 16vw, 195px);
+  height: clamp(75px, 9.5vw, 115px);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -466,7 +466,7 @@ body {
 /* Türkiye ve Azerbaycan Kurtlarını Yukarı Doğru Büyütme (Heybetli Duruş) */
 #runner-2 .animal-sprite-wrap,
 #runner-3 .animal-sprite-wrap {
-  transform: scaleY(1.22) scaleX(1.10);
+  transform: scaleY(1.14) scaleX(1.06);
   transform-origin: bottom center;
 }
 

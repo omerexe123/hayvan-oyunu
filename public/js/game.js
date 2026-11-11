@@ -254,9 +254,9 @@ class AnimalRaceGame {
     // En çok hediye sayısı
     const maxScore = Math.max(0, ...this.gameState.lanes.map(l => l.score || 0));
 
-    // Pist mesafesi: Sol hediye kutusundan (%24) sağ kenara (%82) kadar
+    // Pist mesafesi: Sol hediye kutusundan (%24) sağ kenar emniyet sınırına (%58) kadar
     const baseLeft = 24;
-    const maxLeft = 82;
+    const maxLeft = 58;
     const span = maxLeft - baseLeft;
 
     this.gameState.lanes.forEach(l => {
@@ -267,7 +267,7 @@ class AnimalRaceGame {
       if (runner) {
         let leftPercent = baseLeft;
         if (maxScore > 0 && l.score > 0) {
-          // En çok hediye alan en önde (%82), diğerleri puan oranına göre geride
+          // En çok hediye alan en önde (%58), diğerleri puan oranına göre geride
           const ratio = l.score / maxScore;
           leftPercent = baseLeft + (ratio * span);
         }
